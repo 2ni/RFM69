@@ -1,12 +1,13 @@
 #!/usr/bin/env python2
 
-from RFM69registers import *
+from .RFM69registers import *
 import spidev
 import RPi.GPIO as GPIO
 import time
 
+
 class RFM69(object):
-    def __init__(self, freqBand, nodeID, networkID, isRFM69HW = False, intPin = 18, rstPin = 29, spiBus = 0, spiDevice = 0):
+    def __init__(self, freqBand, nodeID, networkID, isRFM69HW=False, intPin=18, rstPin=29, csPin=24, spiBus=0, spiDevice=0):
 
         self.freqBand = freqBand
         self.address = nodeID
@@ -14,6 +15,7 @@ class RFM69(object):
         self.isRFM69HW = isRFM69HW
         self.intPin = intPin
         self.rstPin = rstPin
+        self.csPin = csPin
         self.spiBus = spiBus
         self.spiDevice = spiDevice
         self.intLock = False
@@ -33,6 +35,8 @@ class RFM69(object):
         GPIO.setmode(GPIO.BOARD)
         GPIO.setup(self.intPin, GPIO.IN)
         GPIO.setup(self.rstPin, GPIO.OUT)
+        GPIO.setup(self.csPin, GPIO.OUT)
+        GPIO.output(self.csPin, GPIO.HIGH)
 
         frfMSB = {RF69_315MHZ: RF_FRFMSB_315, RF69_433MHZ: RF_FRFMSB_433,
                   RF69_868MHZ: RF_FRFMSB_868, RF69_915MHZ: RF_FRFMSB_915}
@@ -98,12 +102,12 @@ class RFM69(object):
         #initialize SPI
         self.spi = spidev.SpiDev()
         self.spi.open(self.spiBus, self.spiDevice)
-        self.spi.max_speed_hz = 4000000
+        self.spi.max_speed_hz = 8000000
 
         # Hard reset the RFM module
-        GPIO.output(self.rstPin, GPIO.HIGH);
+        GPIO.output(self.rstPin, GPIO.HIGH)
         time.sleep(0.1)
-        GPIO.output(self.rstPin, GPIO.LOW);
+        GPIO.output(self.rstPin, GPIO.LOW)
         time.sleep(0.1)
 
         #verify chip is syncing?
@@ -238,7 +242,7 @@ class RFM69(object):
             ack = 0x80
         elif requestACK:
             ack = 0x40
-        if isinstance(buff, basestring):
+        if isinstance(buff, str):
             self.spi.xfer2([REG_FIFO | 0x80, len(buff) + 3, toAddress, self.address, ack] + [int(ord(i)) for i in list(buff)])
         else:
             self.spi.xfer2([REG_FIFO | 0x80, len(buff) + 3, toAddress, self.address, ack] + buff)
@@ -322,10 +326,15 @@ class RFM69(object):
             self.writeReg(REG_PACKETCONFIG2,(self.readReg(REG_PACKETCONFIG2) & 0xFE) | RF_PACKET2_AES_OFF)
 
     def readReg(self, addr):
-        return self.spi.xfer([addr & 0x7F, 0])[1]
+        GPIO.output(self.csPin, GPIO.LOW)
+        value = self.spi.xfer([addr & 0x7F, 0])[1]
+        GPIO.output(self.csPin, GPIO.HIGH)
+        return value
 
     def writeReg(self, addr, value):
+        GPIO.output(self.csPin, GPIO.LOW)
         self.spi.xfer([addr | 0x80, value])
+        GPIO.output(self.csPin, GPIO.HIGH)
 
     def promiscuous(self, onOff):
         self.promiscuousMode = onOff

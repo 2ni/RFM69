@@ -1,10 +1,8 @@
-# Main repo
-
-* https://github.com/etrombly/RFM69
 
 # Description
 
-This is a port of the RFM69 library for arduino from https://github.com/LowPowerLab/RFM69 to python for raspberry pi.
+This is a clone from [etrombly's rfm 69 library](https://github.com/etrombly/RFM69) adapting it to python3.
+I explicitely also had to control the NSS pin on the RPI4 (not sure why).
 
 # Hardware setup
 
@@ -20,20 +18,3 @@ Attach the RFM69 as follows:
 | NSS     | 24  
 | Ground  | 25  
 | RESET   | 29
-
-You can change the interrupt pin (GPIO24) in the class init.
-
-Remember to choose correct frequency for your hardware (315, 433, 868 or 915 MHz).
-
-# Prerequisites
-
-RPi.GPIO and spidev
-
-If you are using newer firmware you'll need to get a newer spidev, the old one is no longer working:
-
-```bash
-git clone https://github.com/Gadgetoid/py-spidev
-cd py-spidev
-sudo make install
-```
-
