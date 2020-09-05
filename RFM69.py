@@ -46,60 +46,59 @@ class RFM69(object):
                   RF69_868MHZ: RF_FRFLSB_868, RF69_915MHZ: RF_FRFLSB_915}
 
         self.CONFIG = {
-          0x01: [REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY],
-          #no shaping
-          0x02: [REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_FSK | RF_DATAMODUL_MODULATIONSHAPING_00],
-          #default:4.8 KBPS
-          0x03: [REG_BITRATEMSB, RF_BITRATEMSB_55555],
-          0x04: [REG_BITRATELSB, RF_BITRATELSB_55555],
-          #default:5khz, (FDEV + BitRate/2 <= 500Khz)
-          0x05: [REG_FDEVMSB, RF_FDEVMSB_50000],
-          0x06: [REG_FDEVLSB, RF_FDEVLSB_50000],
+            0x01: [REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY],
+            # no shaping
+            0x02: [REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_FSK | RF_DATAMODUL_MODULATIONSHAPING_00],
+            # default:4.8 KBPS
+            0x03: [REG_BITRATEMSB, RF_BITRATEMSB_55555],
+            0x04: [REG_BITRATELSB, RF_BITRATELSB_55555],
+            # default:5khz, (FDEV + BitRate/2 <= 500Khz)
+            0x05: [REG_FDEVMSB, RF_FDEVMSB_50000],
+            0x06: [REG_FDEVLSB, RF_FDEVLSB_50000],
 
-          0x07: [REG_FRFMSB, frfMSB[freqBand]],
-          0x08: [REG_FRFMID, frfMID[freqBand]],
-          0x09: [REG_FRFLSB, frfLSB[freqBand]],
+            0x07: [REG_FRFMSB, frfMSB[freqBand]],
+            0x08: [REG_FRFMID, frfMID[freqBand]],
+            0x09: [REG_FRFLSB, frfLSB[freqBand]],
 
-          # looks like PA1 and PA2 are not implemented on RFM69W, hence the max output power is 13dBm
-          # +17dBm and +20dBm are possible on RFM69HW
-          # +13dBm formula: Pout=-18+OutputPower (with PA0 or PA1**)
-          # +17dBm formula: Pout=-14+OutputPower (with PA1 and PA2)**
-          # +20dBm formula: Pout=-11+OutputPower (with PA1 and PA2)** and high power PA settings (section 3.3.7 in datasheet)
-          #0x11: [REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11111],
-          #over current protection (default is 95mA)
-          #0x13: [REG_OCP, RF_OCP_ON | RF_OCP_TRIM_95],
+            # looks like PA1 and PA2 are not implemented on RFM69W, hence the max output power is 13dBm
+            # +17dBm and +20dBm are possible on RFM69HW
+            # +13dBm formula: Pout=-18+OutputPower (with PA0 or PA1**)
+            # +17dBm formula: Pout=-14+OutputPower (with PA1 and PA2)**
+            # +20dBm formula: Pout=-11+OutputPower (with PA1 and PA2)** and high power PA settings (section 3.3.7 in datasheet)
+            # 0x11: [REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | RF_PALEVEL_OUTPUTPOWER_11111],
+            # over current protection (default is 95mA)
+            # 0x13: [REG_OCP, RF_OCP_ON | RF_OCP_TRIM_95],
 
-          # RXBW defaults are { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24 | RF_RXBW_EXP_5} (RxBw: 10.4khz)
-          #//(BitRate < 2 * RxBw)
-          0x19: [REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2],
-          #for BR-19200: //* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24 | RF_RXBW_EXP_3 },
-          #DIO0 is the only IRQ we're using
-          0x25: [REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01],
-          #must be set to dBm = (-Sensitivity / 2) - default is 0xE4=228 so -114dBm
-          0x29: [REG_RSSITHRESH, 220],
-          #/* 0x2d */ { REG_PREAMBLELSB, RF_PREAMBLESIZE_LSB_VALUE } // default 3 preamble bytes 0xAAAAAA
-          0x2e: [REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_FIFOFILL_AUTO | RF_SYNC_SIZE_2 | RF_SYNC_TOL_0],
-          #attempt to make this compatible with sync1 byte of RFM12B lib
-          0x2f: [REG_SYNCVALUE1, 0x2D],
-          #NETWORK ID
-          0x30: [REG_SYNCVALUE2, networkID],
-          0x37: [REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF |
-                RF_PACKET1_CRC_ON | RF_PACKET1_CRCAUTOCLEAR_ON | RF_PACKET1_ADRSFILTERING_OFF],
-          #in variable length mode: the max frame size, not used in TX
-          0x38: [REG_PAYLOADLENGTH, 66],
-          #* 0x39 */ { REG_NODEADRS, nodeID }, //turned off because we're not using address filtering
-          #TX on FIFO not empty
-          0x3C: [REG_FIFOTHRESH, RF_FIFOTHRESH_TXSTART_FIFONOTEMPTY | RF_FIFOTHRESH_VALUE],
-          #RXRESTARTDELAY must match transmitter PA ramp-down time (bitrate dependent)
-          0x3d: [REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_2BITS | RF_PACKET2_AUTORXRESTART_ON | RF_PACKET2_AES_OFF],
-          #for BR-19200: //* 0x3d */ { REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_NONE | RF_PACKET2_AUTORXRESTART_ON | RF_PACKET2_AES_OFF }, //RXRESTARTDELAY must match transmitter PA ramp-down time (bitrate dependent)
-          #* 0x6F */ { REG_TESTDAGC, RF_DAGC_CONTINUOUS }, // run DAGC continuously in RX mode
-          # run DAGC continuously in RX mode, recommended default for AfcLowBetaOn=0
-          0x6F: [REG_TESTDAGC, RF_DAGC_IMPROVED_LOWBETA0],
-          0x00: [255, 0]
+            # RXBW defaults are { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24 | RF_RXBW_EXP_5} (RxBw: 10.4khz)
+            # //(BitRate < 2 * RxBw)
+            0x19: [REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_16 | RF_RXBW_EXP_2],
+            # for BR-19200: //* 0x19 */ { REG_RXBW, RF_RXBW_DCCFREQ_010 | RF_RXBW_MANT_24 | RF_RXBW_EXP_3 },
+            # DIO0 is the only IRQ we're using
+            0x25: [REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01],
+            # must be set to dBm = (-Sensitivity / 2) - default is 0xE4=228 so -114dBm
+            0x29: [REG_RSSITHRESH, 220],
+            # /* 0x2d */ { REG_PREAMBLELSB, RF_PREAMBLESIZE_LSB_VALUE } // default 3 preamble bytes 0xAAAAAA
+            0x2e: [REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_FIFOFILL_AUTO | RF_SYNC_SIZE_2 | RF_SYNC_TOL_0],
+            # attempt to make this compatible with sync1 byte of RFM12B lib
+            0x2f: [REG_SYNCVALUE1, 0x2D],
+            # NETWORK ID
+            0x30: [REG_SYNCVALUE2, networkID],
+            0x37: [REG_PACKETCONFIG1, RF_PACKET1_FORMAT_VARIABLE | RF_PACKET1_DCFREE_OFF | RF_PACKET1_CRC_ON | RF_PACKET1_CRCAUTOCLEAR_ON | RF_PACKET1_ADRSFILTERING_OFF],
+            # in variable length mode: the max frame size, not used in TX
+            0x38: [REG_PAYLOADLENGTH, 66],
+            # * 0x39 */ { REG_NODEADRS, nodeID }, //turned off because we're not using address filtering
+            # TX on FIFO not empty
+            0x3C: [REG_FIFOTHRESH, RF_FIFOTHRESH_TXSTART_FIFONOTEMPTY | RF_FIFOTHRESH_VALUE],
+            # RXRESTARTDELAY must match transmitter PA ramp-down time (bitrate dependent)
+            0x3d: [REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_2BITS | RF_PACKET2_AUTORXRESTART_ON | RF_PACKET2_AES_OFF],
+            # for BR-19200: //* 0x3d */ { REG_PACKETCONFIG2, RF_PACKET2_RXRESTARTDELAY_NONE | RF_PACKET2_AUTORXRESTART_ON | RF_PACKET2_AES_OFF }, //RXRESTARTDELAY must match transmitter PA ramp-down time (bitrate dependent)
+            # * 0x6F */ { REG_TESTDAGC, RF_DAGC_CONTINUOUS }, // run DAGC continuously in RX mode
+            # run DAGC continuously in RX mode, recommended default for AfcLowBetaOn=0
+            0x6F: [REG_TESTDAGC, RF_DAGC_IMPROVED_LOWBETA0],
+            0x00: [255, 0]
         }
 
-        #initialize SPI
+        # initialize SPI
         self.spi = spidev.SpiDev()
         self.spi.open(self.spiBus, self.spiDevice)
         self.spi.max_speed_hz = 8000000
@@ -110,14 +109,14 @@ class RFM69(object):
         GPIO.output(self.rstPin, GPIO.LOW)
         time.sleep(0.1)
 
-        #verify chip is syncing?
+        # verify chip is syncing?
         while self.readReg(REG_SYNCVALUE1) != 0xAA:
             self.writeReg(REG_SYNCVALUE1, 0xAA)
 
         while self.readReg(REG_SYNCVALUE1) != 0x55:
             self.writeReg(REG_SYNCVALUE1, 0x55)
 
-        #write config
+        # write config
         for value in self.CONFIG.values():
             self.writeReg(value[0], value[1])
 
@@ -161,14 +160,10 @@ class RFM69(object):
         while self.mode == RF69_MODE_SLEEP and self.readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY == 0x00:
             pass
 
-        self.mode = newMode;
+        self.mode = newMode
 
     def sleep(self):
         self.setMode(RF69_MODE_SLEEP)
-
-    def setAddress(self, addr):
-        self.address = addr
-        self.writeReg(REG_NODEADRS, self.address)
 
     def setNetwork(self, networkID):
         self.networkID = networkID
@@ -184,13 +179,13 @@ class RFM69(object):
         if self.mode == RF69_MODE_STANDBY:
             self.receiveBegin()
             return True
-        #if signal stronger than -100dBm is detected assume channel activity
+        # if signal stronger than -100dBm is detected assume channel activity
         elif self.mode == RF69_MODE_RX and self.PAYLOADLEN == 0 and self.readRSSI() < CSMA_LIMIT:
             self.setMode(RF69_MODE_STANDBY)
             return True
         return False
 
-    def send(self, toAddress, buff = "", requestACK = False):
+    def send(self, toAddress, buff="", requestACK=False):
         self.writeReg(REG_PACKETCONFIG2, (self.readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART)
         now = time.time()
         while (not self.canSend()) and time.time() - now < RF69_CSMA_LIMIT_S:
@@ -204,7 +199,7 @@ class RFM69(object):
 #    requires user action to read the received data and decide what to do with it
 #    replies usually take only 5-8ms at 50kbps@915Mhz
 
-    def sendWithRetry(self, toAddress, buff = "", retries = 3, retryWaitTime = 10):
+    def sendWithRetry(self, toAddress, buff="", retries=3, retryWaitTime=10):
         for i in range(0, retries):
             self.send(toAddress, buff, True)
             sentTime = time.time()
@@ -221,16 +216,16 @@ class RFM69(object):
     def ACKRequested(self):
         return self.ACK_REQUESTED and self.TARGETID != RF69_BROADCAST_ADDR
 
-    def sendACK(self, toAddress = 0, buff = ""):
+    def sendACK(self, toAddress=0, buff=""):
         toAddress = toAddress if toAddress > 0 else self.SENDERID
         while not self.canSend():
             self.receiveDone()
         self.sendFrame(toAddress, buff, False, True)
 
     def sendFrame(self, toAddress, buff, requestACK, sendACK):
-        #turn off receiver to prevent reception while filling fifo
+        # turn off receiver to prevent reception while filling fifo
         self.setMode(RF69_MODE_STANDBY)
-        #wait for modeReady
+        # wait for modeReady
         while (self.readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00:
             pass
 
@@ -243,9 +238,23 @@ class RFM69(object):
         elif requestACK:
             ack = 0x40
         if isinstance(buff, str):
-            self.spi.xfer2([REG_FIFO | 0x80, len(buff) + 3, toAddress, self.address, ack] + [int(ord(i)) for i in list(buff)])
+            self.spi.xfer2([
+                REG_FIFO | 0x80,
+                len(buff) + 5,
+                (toAddress >> 8 & 0xff),     # high byte
+                (toAddress & 0xff),          # low byte
+                ((self.address >> 8) & 0xff),  # high byte
+                (self.address & 0xff),       # low byte
+                ack] + [int(ord(i)) for i in list(buff)])
         else:
-            self.spi.xfer2([REG_FIFO | 0x80, len(buff) + 3, toAddress, self.address, ack] + buff)
+            self.spi.xfer2([
+                REG_FIFO | 0x80,
+                len(buff) + 5,
+                (toAddress >> 8 & 0xff)
+                (toAddress & 0xff),
+                ((self.address >> 8) & 0xff),
+                (self.address & 0xff),
+                ack] + buff)
 
         self.DATASENT = False
         self.setMode(RF69_MODE_TX)
@@ -258,14 +267,16 @@ class RFM69(object):
         self.DATASENT = True
         if self.mode == RF69_MODE_RX and self.readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY:
             self.setMode(RF69_MODE_STANDBY)
-            self.PAYLOADLEN, self.TARGETID, self.SENDERID, CTLbyte = self.spi.xfer2([REG_FIFO & 0x7f,0,0,0,0])[1:]
+            self.PAYLOADLEN, th, tl, sh, sl, CTLbyte = self.spi.xfer2([REG_FIFO & 0x7f, 0, 0, 0, 0, 0, 0])[1:]
+            self.TARGETID = tl | (th << 8)
+            self.SENDERID = sl | (sh << 8)
             if self.PAYLOADLEN > 66:
                 self.PAYLOADLEN = 66
             if not (self.promiscuousMode or self.TARGETID == self.address or self.TARGETID == RF69_BROADCAST_ADDR):
                 self.PAYLOADLEN = 0
                 self.intLock = False
                 return
-            self.DATALEN = self.PAYLOADLEN - 3
+            self.DATALEN = self.PAYLOADLEN - 5
             self.ACK_RECEIVED = CTLbyte & 0x80
             self.ACK_REQUESTED = CTLbyte & 0x40
 
@@ -288,7 +299,7 @@ class RFM69(object):
         if (self.readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY):
             # avoid RX deadlocks
             self.writeReg(REG_PACKETCONFIG2, (self.readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART)
-        #set DIO0 to "PAYLOADREADY" in receive mode
+        # set DIO0 to "PAYLOADREADY" in receive mode
         self.writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01)
         self.setMode(RF69_MODE_RX)
 
@@ -307,7 +318,7 @@ class RFM69(object):
         self.receiveBegin()
         return False
 
-    def readRSSI(self, forceTrigger = False):
+    def readRSSI(self, forceTrigger=False):
         rssi = 0
         if forceTrigger:
             self.writeReg(REG_RSSICONFIG, RF_RSSI_START)
@@ -321,9 +332,9 @@ class RFM69(object):
         self.setMode(RF69_MODE_STANDBY)
         if key != 0 and len(key) == 16:
             self.spi.xfer([REG_AESKEY1 | 0x80] + [int(ord(i)) for i in list(key)])
-            self.writeReg(REG_PACKETCONFIG2,(self.readReg(REG_PACKETCONFIG2) & 0xFE) | RF_PACKET2_AES_ON)
+            self.writeReg(REG_PACKETCONFIG2, (self.readReg(REG_PACKETCONFIG2) & 0xFE) | RF_PACKET2_AES_ON)
         else:
-            self.writeReg(REG_PACKETCONFIG2,(self.readReg(REG_PACKETCONFIG2) & 0xFE) | RF_PACKET2_AES_OFF)
+            self.writeReg(REG_PACKETCONFIG2, (self.readReg(REG_PACKETCONFIG2) & 0xFE) | RF_PACKET2_AES_OFF)
 
     def readReg(self, addr):
         GPIO.output(self.csPin, GPIO.LOW)
@@ -342,11 +353,11 @@ class RFM69(object):
     def setHighPower(self, onOff):
         if onOff:
             self.writeReg(REG_OCP, RF_OCP_OFF)
-            #enable P1 & P2 amplifier stages
+            # enable P1 & P2 amplifier stages
             self.writeReg(REG_PALEVEL, (self.readReg(REG_PALEVEL) & 0x1F) | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON)
         else:
             self.writeReg(REG_OCP, RF_OCP_ON)
-            #enable P0 only
+            # enable P0 only
             self.writeReg(REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | powerLevel)
 
     def setHighPowerRegs(self, onOff):
@@ -369,9 +380,8 @@ class RFM69(object):
         while self.readReg(REG_TEMP1) & RF_TEMP1_MEAS_RUNNING:
             pass
         # COURSE_TEMP_COEF puts reading in the ballpark, user can add additional correction
-        #'complement'corrects the slope, rising temp = rising val
+        # 'complement'corrects the slope, rising temp = rising val
         return (int(~self.readReg(REG_TEMP2)) * -1) + COURSE_TEMP_COEF + calFactor
-
 
     def rcCalibration(self):
         self.writeReg(REG_OSC1, RF_OSC1_RCCAL_START)

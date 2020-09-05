@@ -32,7 +32,7 @@
 # and copyright notices in any redistribution of this code
 # **********************************************************************************
 # RFM69/SX1231 Internal registers addresses
-#**************************************************
+# **************************************************
 
 REG_FIFO = 0x00
 REG_OPMODE = 0x01
@@ -114,13 +114,13 @@ REG_AESKEY15 = 0x4C
 REG_AESKEY16 = 0x4D
 REG_TEMP1 = 0x4E
 REG_TEMP2 = 0x4F
-REG_TESTPA1 = 0x5A #only present on RFM69HW/SX1231H
-REG_TESTPA2 = 0x5C #only present on RFM69HW/SX1231H
+REG_TESTPA1 = 0x5A  # only present on RFM69HW/SX1231H
+REG_TESTPA2 = 0x5C  # only present on RFM69HW/SX1231H
 REG_TESTDAGC = 0x6F
 
-#******************************************************
+# ******************************************************
 # RF69/SX1231 bit control definition
-#******************************************************
+# ******************************************************
 # RegOpMode
 RF_OPMODE_SEQUENCER_OFF = 0x80
 RF_OPMODE_SEQUENCER_ON = 0x00  # Default
@@ -195,7 +195,7 @@ RF_BITRATEMSB_300000 = 0x00
 RF_BITRATELSB_300000 = 0x6B
 RF_BITRATEMSB_32768 = 0x03
 RF_BITRATELSB_32768 = 0xD1
-#custom bit rates
+# custom bit rates
 RF_BITRATEMSB_55555 = 0x02
 RF_BITRATELSB_55555 = 0x40
 RF_BITRATEMSB_200KBPS = 0x00
@@ -450,10 +450,10 @@ RF_LISTEN1_END_10 = 0x04
 
 
 # RegListen2
-RF_LISTEN2_COEFIDLE_VALUE = 0xF5 # Default
+RF_LISTEN2_COEFIDLE_VALUE = 0xF5  # Default
 
 # RegListen3
-RF_LISTEN3_COEFRX_VALUE = 0x20 # Default
+RF_LISTEN3_COEFRX_VALUE = 0x20  # Default
 
 # RegPaLevel
 RF_PALEVEL_PA0_ON = 0x80  # Default
@@ -660,7 +660,7 @@ RF_AGCTHRESH2_STEP2_3 = 0x30  # XXX wrong -- Default
 RF_AGCTHRESH2_STEP2_4 = 0x40
 RF_AGCTHRESH2_STEP2_5 = 0x50
 RF_AGCTHRESH2_STEP2_6 = 0x60
-RF_AGCTHRESH2_STEP2_7 = 0x70	# default
+RF_AGCTHRESH2_STEP2_7 = 0x70  # default
 RF_AGCTHRESH2_STEP2_8 = 0x80
 RF_AGCTHRESH2_STEP2_9 = 0x90
 RF_AGCTHRESH2_STEP2_10 = 0xA0
@@ -1070,22 +1070,22 @@ RF_DAGC_NORMAL = 0x00  # Reset value
 RF_DAGC_IMPROVED_LOWBETA1 = 0x20  #
 RF_DAGC_IMPROVED_LOWBETA0 = 0x30  # Recommended default
 
-#settings pulled from RFM69.h
+# settings pulled from RFM69.h
 RF69_315MHZ = 31  # non trivial values to avoid misconfiguration
 RF69_433MHZ = 43
 RF69_868MHZ = 86
 RF69_915MHZ = 91
 
-RF69_MAX_DATA_LEN = 61 # to take advantage of the built in AES/CRC we want to limit the frame size to the internal FIFO size (66 bytes - 3 bytes overhead)
+RF69_MAX_DATA_LEN = 58  # to take advantage of the built in AES/CRC we want to limit the frame size to the internal FIFO size (65 bytes - 7 bytes overhead)
 
-CSMA_LIMIT = -90 # upper RX signal sensitivity threshold in dBm for carrier sense access
-RF69_MODE_SLEEP = 0 # XTAL OFF
-RF69_MODE_STANDBY = 1 # XTAL ON
-RF69_MODE_SYNTH	= 2 # PLL ON
-RF69_MODE_RX = 3 # RX MODE
-RF69_MODE_TX	= 4 # TX MODE
+CSMA_LIMIT = -90  # upper RX signal sensitivity threshold in dBm for carrier sense access
+RF69_MODE_SLEEP = 0  # XTAL OFF
+RF69_MODE_STANDBY = 1  # XTAL ON
+RF69_MODE_SYNTH = 2  # PLL ON
+RF69_MODE_RX = 3  # RX MODE
+RF69_MODE_TX = 4  # TX MODE
 
-COURSE_TEMP_COEF = -90 # puts the temperature reading in the ballpark, user can fine tune the returned value
+COURSE_TEMP_COEF = -90  # puts the temperature reading in the ballpark, user can fine tune the returned value
 RF69_BROADCAST_ADDR = 255
 RF69_CSMA_LIMIT_MS = 1000
 RF69_CSMA_LIMIT_S = 1
